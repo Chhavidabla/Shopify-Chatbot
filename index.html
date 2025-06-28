@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShopBot - AI Sales Assistant</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 1200px;
+            height: 90vh;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Login Modal */
+        .login-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .login-form {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .login-form h2 {
+            margin-bottom: 30px;
+            color: #333;
+            font-size: 28px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e1e1;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 300px;
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .sidebar-header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .sidebar-header p {
+            opacity: 0.8;
+            font-size: 14px;
+        }
+
+        .user-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .user-info h3 {
+            margin-bottom: 5px;
+        }
+
+        .user-info p {
+            opacity: 0.8;
+            font-size: 12px;
+        }
+
+        .chat-controls {
+            margin-bottom: 20px;
+        }
+
+        .control-btn {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 10px;
+            transition: background 0.3s;
+            font-size: 14px;
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .control-btn i {
+            margin-right: 8px;
+        }
+
+        .session-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: auto;
+        }
+
+        .session-info h4 {
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .session-info p {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        /* Main Chat Area */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .chat-header {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .chat-header h2 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .chat-header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            animation: messageAppear 0.3s ease-out;
+        }
+
+        @keyframes messageAppear {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 15px 20px;
+            border-radius: 20px;
+            position: relative;
+        }
+
+        .message.bot .message-content {
+            background: white;
+            color: #333;
+            border: 1px solid #e9ecef;
+            margin-left: 50px;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin-right: 50px;
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            top: 10px;
+        }
+
+        .message.bot .message-avatar {
+            left: 5px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .message.user .message-avatar {
+            right: 5px;
+            background: #28a745;
+            color: white;
+        }
+
+        .message-time {
+            font-size: 11px;
+            opacity: 0.6;
+            margin-top: 5px;
+        }
+
+        .product-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            display: flex;
+            gap: 15px;
+            transition: transform 0.2s;
+        }
+
+        .product-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .product-image {
+            width: 80px;
+            height: 80px;
+            background: #e9ecef;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+        }
+
+        .product-details {
+            flex: 1;
+        }
+
+        .product-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .product-price {
+            color: #667eea;
+            font-weight: 600;
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .product-description {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .product-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-small:hover {
+            transform: translateY(-1px);
+        }
+
+        /* Input Area */
+        .chat-input {
+            background: white;
+            padding: 20px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .input-group {
+            flex: 1;
+            position: relative;
+        }
+
+        .input-group textarea {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 25px;
+            resize: none;
+            font-family: inherit;
+            font-size: 14px;
+            line-height: 1.4;
+            max-height: 120px;
+            min-height: 50px;
+            transition: border-color 0.3s;
+        }
+
+        .input-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .send-btn {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+        }
+
+        .send-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #666;
+            font-style: italic;
+            margin-left: 50px;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 3px;
+        }
+
+        .dot {
+            width: 6px;
+            height: 6px;
+            background: #667eea;
+            border-radius: 50%;
+            animation: typingDot 1.4s infinite;
+        }
+
+        .dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typingDot {
+            0%, 60%, 100% {
+                opacity: 0.3;
+                transform: scale(1);
+            }
+            30% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .app-container {
+                height: 100vh;
+                border-radius: 0;
+                max-width: 100%;
+            }
+
+            .sidebar {
+                width: 100%;
+                position: absolute;
+                top: 0;
+                left: -100%;
+                height: 100%;
+                z-index: 100;
+                transition: left 0.3s;
+            }
+
+            .sidebar.open {
+                left: 0;
+            }
+
+            .chat-container {
+                width: 100%;
+            }
+
+            .message-content {
+                max-width: 85%;
+            }
+
+            .product-card {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .mobile-menu-btn {
+                position: fixed;
+                top: 20px;
+                left: 20px;
+                z-index: 101;
+                background: rgba(102, 126, 234, 0.9);
+                color: white;
+                border: none;
+                border-radius: 50%;
+                width: 50px;
+                height: 50px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                backdrop-filter: blur(10px);
+            }
+        }
+
+        @media (min-width: 769px) {
+            .mobile-menu-btn {
+                display: none;
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Filter Panel */
+        .filter-panel {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .filter-panel h4 {
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .filter-group {
+            margin-bottom: 15px;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 12px;
+        }
+
+        .filter-group select, .filter-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 12px;
+        }
+
+        .filter-group select option {
+            color: #333;
+        }
+
+        .logout-btn {
+            background: rgba(220, 53, 69, 0.8);
+            border: 1px solid rgba(220, 53, 69, 0.5);
+        }
+
+        .logout-btn:hover {
+            background: rgba(220, 53, 69, 1);
+        }
+    </style>
+</head>
+<body>
+    <!-- Mobile Menu Button -->
+    <button class="mobile-menu-btn" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="login-modal">
+        <div class="login-form">
+            <h2><i class="fas fa-shopping-cart"></i> ShopBot</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="login-btn">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h1><i class="fas fa-robot"></i> ShopBot</h1>
+                <p>Your AI Shopping Assistant</p>
+            </div>
+
+            <div class="user-info">
+                <h3 id="userDisplayName">Guest User</h3>
+                <p id="userStatus">Online</p>
+            </div>
+
+            <div class="chat-controls">
+                <button class="control-btn" onclick="clearChat()">
+                    <i class="fas fa-broom"></i> Clear Chat
+                </button>
+                <button class="control-btn" onclick="downloadHistory()">
+                    <i class="fas fa-download"></i> Download History
+                </button>
+                <button class="control-btn" onclick="showFilters()">
+                    <i class="fas fa-filter"></i> Product Filters
+                </button>
+            </div>
+
+            <div class="filter-panel" id="filterPanel" style="display: none;">
+                <h4><i class="fas fa-sliders-h"></i> Filters</h4>
+                <div class="filter-group">
+                    <label>Category</label>
+                    <select id="categoryFilter">
+                        <option value="">All Categories</option>
+                        <option value="electronics">Electronics</option>
+                        <option value="books">Books</option>
+                        <option value="clothing">Clothing</option>
+                        <option value="home">Home & Garden</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Price Range</label>
+                    <select id="priceFilter">
+                        <option value="">All Prices</option>
+                        <option value="0-50">$0 - $50</option>
+                        <option value="50-100">$50 - $100</option>
+                        <option value="100-500">$100 - $500</option>
+                        <option value="500+">$500+</option>
+                    </select>
+                </div>
+                <button class="control-btn" onclick="applyFilters()">
+                    <i class="fas fa-check"></i> Apply Filters
+                </button>
+            </div>
+
+            <div class="session-info">
+                <h4><i class="fas fa-clock"></i> Session Info</h4>
+                <p>Started: <span id="sessionStart">--</span></p>
+                <p>Messages: <span id="messageCount">0</span></p>
+                <p>Duration: <span id="sessionDuration">00:00</span></p>
+            </div>
+
+            <div class="chat-controls">
+                <button class="control-btn logout-btn" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Chat Area -->
+        <div class="chat-container">
+            <div class="chat-header">
+                <h2>Welcome to ShopBot!</h2>
+                <p>Ask me anything about our products. I can help you search, compare, and purchase items.</p>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+                <div class="message bot">
+                    <div class="message-avatar">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="message-content">
+                        <div>Hello! I'm your personal shopping assistant. How can I help you find the perfect product today?</div>
+                        <div class="message-time" id="welcomeTime"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chat-input">
+                <div class="input-container">
+                    <div class="input-group">
+                        <textarea 
+                            id="messageInput" 
+                            placeholder="Type your message here... (e.g., 'Show me laptops under $800')"
+                            rows="1"
+                            onkeypress="handleKeyPress(event)"
+                            oninput="adjustTextareaHeight()"
+                        ></textarea>
+                    </div>
+                    <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Application State
+        let currentUser = null;
+        let sessionStart = null;
+        let messageCount = 0;
+        let chatHistory = [];
+        let isTyping = false;
+        let sessionTimer = null;
+
+        // Initialize application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+
+        function initializeApp() {
+            // Set welcome message time
+            document.getElementById('welcomeTime').textContent = getCurrentTime();
+            
+            // Check for existing session
+            const savedUser = JSON.parse(localStorage.getItem('shopbot_user') || 'null');
+            if (savedUser) {
+                currentUser = savedUser;
+                hideLoginModal();
+                startSession();
+            }
+        }
+
+        // Authentication
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            // Simple authentication (in real app, this would be API call)
+            if (username && password) {
+                currentUser = {
+                    username: username,
+                    loginTime: new Date().toISOString()
+                };
+                
+                // Store user session (in real app, use secure tokens)
+                localStorage.setItem('shopbot_user', JSON.stringify(currentUser));
+                
+                hideLoginModal();
+                startSession();
+                
+                addBotMessage(`Welcome back, ${username}! I'm excited to help you shop today.`);
+            }
+        });
+
+        function hideLoginModal() {
+            document.getElementById('loginModal').classList.add('hidden');
+            document.getElementById('userDisplayName').textContent = currentUser.username;
+        }
+
+        function logout() {
+            localStorage.removeItem('shopbot_user');
+            localStorage.removeItem('shopbot_history');
+            location.reload();
+        }
+
+        // Session Management
+        function startSession() {
+            sessionStart = new Date();
+            document.getElementById('sessionStart').textContent = sessionStart.toLocaleTimeString();
+            
+            // Start session timer
+            sessionTimer = setInterval(updateSessionDuration, 1000);
+            
+            // Load chat history
+            loadChatHistory();
+        }
+
+        function updateSessionDuration() {
+            if (sessionStart) {
+                const now = new Date();
+                const duration = Math.floor((now - sessionStart) / 1000);
+                const minutes = Math.floor(duration / 60);
+                const seconds = duration % 60;
+                document.getElementById('sessionDuration').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+        }
+
+        // Chat Functionality
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            // Add user message to chat
+            addUserMessage(message);
+            input.value = '';
+            adjustTextareaHeight();
+            showTypingIndicator();
+
+            // 🔗 Send to Flask backend
+            fetch("http://127.0.0.1:5000/api/send", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ message: message })
+            })
+            .then(res => res.json())
+            .then(data => {
+                hideTypingIndicator();
+                addBotMessage(data.reply, data.products);
+            })
+            .catch(error => {
+                hideTypingIndicator();
+                addBotMessage("Oops! Something went wrong contacting the server.");
+                console.error("Error:", error);
+            });
+        }
+            /*const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // Add user message
+            addUserMessage(message);
+            input.value = '';
+            adjustTextareaHeight();
+            
+            // Show typing indicator
+            showTypingIndicator();
+            
+            // Simulate API call delay
+            setTimeout(() => {
+                hideTypingIndicator();
+                processUserMessage(message);
+            }, 1000 + Math.random() * 2000);
+        }*/
+
+        function addUserMessage(message) {
+            const messageDiv = createMessageElement('user', message);
+            document.getElementById('chatMessages').appendChild(messageDiv);
+            scrollToBottom();
+            updateMessageCount();
+            saveChatHistory('user', message);
+        }
+
+        function addBotMessage(message, products = null) {
+            const messageDiv = createMessageElement('bot', message, products);
+            document.getElementById('chatMessages').appendChild(messageDiv);
+            scrollToBottom();
+            updateMessageCount();
+            saveChatHistory('bot', message, products);
+        }
+
+        function createMessageElement(sender, message, products = null) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.innerHTML = sender === 'user' ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
+            
+            const content = document.createElement('div');
+            content.className = 'message-content';
+            
+            const messageText = document.createElement('div');
+            messageText.textContent = message;
+            content.appendChild(messageText);
+            
+            // Add products if provided
+            if (products && products.length > 0) {
+                products.forEach(product => {
+                    const productCard = createProductCard(product);
+                    content.appendChild(productCard);
+                });
+            }
+            
+            const time = document.createElement('div');
+            time.className = 'message-time';
+            time.textContent = getCurrentTime();
+            content.appendChild(time);
+            
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(content);
+            
+            return messageDiv;
+        }
+
+        function createProductCard(product) {
+            const card = document.createElement('div');
+            card.className = 'product-card';
+            
+            card.innerHTML = `
+                <div class="product-image">
+                    <i class="fas fa-${getProductIcon(product.category)}"></i>
+                </div>
+                <div class="product-details">
+                    <div class="product-name">${product.name}</div>
+                    <div class="product-price">$${product.price}</div>
+                    <div class="product-description">${product.description}</div>
+                    <div class="product-actions">
+                        <button class="btn-small btn-primary" onclick="viewProduct(${product.id})">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                        <button class="btn-small btn-secondary" onclick="addToCart(${product.id})">
+                            <i class="fas fa-cart-plus"></i> Add to Cart
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            return card;
+        }
+
+        function getProductIcon(category) {
+            const icons = {
+                electronics: 'laptop',
+                books: 'book',
+                clothing: 'tshirt',
+                home: 'home',
+                default: 'box'
+            };
+            return icons[category] || icons.default;
+        }
+
+        // Message Processing
+        function processUserMessage(message) {
+            const lowerMessage = message.toLowerCase();
+            
+            // Simple keyword-based responses (in real app, this would be NLP/AI)
+            if (lowerMessage.includes('laptop') || lowerMessage.includes('computer')) {
+                const laptops = generateMockProducts('electronics', 'laptop', 3);
+                addBotMessage("Here are some great laptops I found for you:", laptops);
+            } else if (lowerMessage.includes('book')) {
+                const books = generateMockProducts('books', 'book', 3);
+                addBotMessage("Here are some popular books:", books);
+            } else if (lowerMessage.includes('shirt') || lowerMessage.includes('clothing')) {
+                const clothing = generateMockProducts('clothing', 'shirt', 3);
+                addBotMessage("Check out these clothing items:", clothing);
+            } else if (lowerMessage.includes('help')) {
+                addBotMessage("I can help you with:\n• Searching for products\n• Comparing prices\n• Finding deals\n• Product recommendations\n\nJust tell me what you're looking for!");
+            } else if (lowerMessage.includes('price') && lowerMessage.includes('under')) {
+                const priceMatch = lowerMessage.match(/under\s*\$?(\d+)/);
+                if (priceMatch) {
+                    const maxPrice = parseInt(priceMatch[1]);
+                    const products = generateMockProducts('electronics', 'item', 3, maxPrice);
+                    addBotMessage(`Here are items under $${maxPrice}:`, products);
+                }
+            } else {
+                // Generic search
+                const products = generateMockProducts('electronics', 'product', 2);
+                addBotMessage("I found these products that might interest you:", products);
+            }
+        }
+
+        // Mock Product Generation
+        function generateMockProducts(category, type, count, maxPrice = null) {
+            const products = [];
+            const productNames = {
+                laptop: ['Dell XPS 13', 'MacBook Air', 'Lenovo ThinkPad', 'HP Pavilion', 'ASUS ZenBook'],
+                book: ['The Great Gatsby', 'To Kill a Mockingbird', '1984', 'Pride and Prejudice', 'The Catcher in the Rye'],
+                shirt: ['Cotton T-Shirt', 'Polo Shirt', 'Dress Shirt', 'Casual Shirt', 'Hoodie'],
+                product: ['Wireless Headphones', 'Smartphone', 'Tablet', 'Smart Watch', 'Bluetooth Speaker']
+            };
+            
+            const names = productNames[type] || productNames.product;
+            
+            for (let i = 0; i < count; i++) {
+                const price = maxPrice ? 
+                    Math.floor(Math.random() * maxPrice) + 10 : 
+                    Math.floor(Math.random() * 800) + 50;
+                
+                products.push({
+                    id: Date.now() + i,
+                    name: names[i % names.length],
+                    price: price,
+                    category: category,
+                    description: `High-quality ${type} with excellent features and great value.`,
+                    rating: (Math.random() * 2 + 3).toFixed(1)
+                });
+            }
+            
+            return products;
+        }
+
+        // Product Actions
+        function viewProduct(productId) {
+            addBotMessage(`Opening product details for item #${productId}. In a real app, this would show detailed product information, reviews, and specifications.`);
+        }
+
+        function addToCart(productId) {
+            addBotMessage(`Great choice! I've added item #${productId} to your cart. Would you like to continue shopping or proceed to checkout?`);
+        }
+
+        // Utility Functions
+        function getCurrentTime() {
+            return new Date().toLocaleTimeString();
+        }
+
+        function scrollToBottom() {
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function updateMessageCount() {
+            messageCount++;
+            document.getElementById('messageCount').textContent = messageCount;
+        }
+
+        function adjustTextareaHeight() {
+            const textarea = document.getElementById('messageInput');
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        // Typing Indicator
+        function showTypingIndicator() {
+            if (isTyping) return;
+            
+            isTyping = true;
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typingIndicator';
+            typingDiv.className = 'typing-indicator';
+            typingDiv.innerHTML = `
+                <i class="fas fa-robot"></i>
+                <span>ShopBot is typing</span>
+                <div class="typing-dots">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                </div>
+            `;
+            
+            document.getElementById('chatMessages').appendChild(typingDiv);
+            scrollToBottom();
+        }
+
+        function hideTypingIndicator() {
+            const typingIndicator = document.getElementById('typingIndicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+            isTyping = false;
+        }
+
+        // Chat Controls
+        function clearChat() {
+            if (confirm('Are you sure you want to clear the chat history?')) {
+                const chatMessages = document.getElementById('chatMessages');
+                chatMessages.innerHTML = `
+                    <div class="message bot">
+                        <div class="message-avatar">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <div class="message-content">
+                            <div>Chat cleared! How can I help you today?</div>
+                            <div class="message-time">${getCurrentTime()}</div>
+                        </div>
+                    </div>
+                `;
+                messageCount = 1;
+                document.getElementById('messageCount').textContent = messageCount;
+                chatHistory = [];
+                saveChatHistory('bot', 'Chat cleared! How can I help you today?');
+            }
+        }
+
+        function downloadHistory() {
+            if (chatHistory.length === 0) {
+                alert('No chat history to download.');
+                return;
+            }
+
+            const historyText = chatHistory.map(msg => {
+                const timestamp = new Date(msg.timestamp).toLocaleString();
+                return `[${timestamp}] ${msg.sender.toUpperCase()}: ${msg.message}`;
+            }).join('\n');
+
+            const blob = new Blob([historyText], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `shopbot-history-${new Date().toISOString().split('T')[0]}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+
+        function showFilters() {
+            const filterPanel = document.getElementById('filterPanel');
+            filterPanel.style.display = filterPanel.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function applyFilters() {
+            const category = document.getElementById('categoryFilter').value;
+            const priceRange = document.getElementById('priceFilter').value;
+            
+            let filterMessage = "I'll search for products";
+            if (category) filterMessage += ` in ${category}`;
+            if (priceRange) filterMessage += ` with price range ${priceRange}`;
+            filterMessage += ". Here's what I found:";
+            
+            // Generate filtered products
+            const products = generateFilteredProducts(category, priceRange);
+            addBotMessage(filterMessage, products);
+            
+            // Hide filter panel
+            document.getElementById('filterPanel').style.display = 'none';
+        }
+
+        function generateFilteredProducts(category, priceRange) {
+            let products = [];
+            let minPrice = 0, maxPrice = 1000;
+            
+            if (priceRange) {
+                if (priceRange === '0-50') { minPrice = 0; maxPrice = 50; }
+                else if (priceRange === '50-100') { minPrice = 50; maxPrice = 100; }
+                else if (priceRange === '100-500') { minPrice = 100; maxPrice = 500; }
+                else if (priceRange === '500+') { minPrice = 500; maxPrice = 2000; }
+            }
+            
+            const categoryProducts = {
+                electronics: ['Smartphone', 'Laptop', 'Headphones', 'Tablet', 'Camera'],
+                books: ['Fiction Novel', 'Programming Guide', 'Cookbook', 'Biography', 'Self-Help Book'],
+                clothing: ['T-Shirt', 'Jeans', 'Jacket', 'Sneakers', 'Dress'],
+                home: ['Coffee Maker', 'Lamp', 'Cushion', 'Plant Pot', 'Mirror']
+            };
+            
+            const productNames = category ? categoryProducts[category] : 
+                [...categoryProducts.electronics, ...categoryProducts.books, ...categoryProducts.clothing];
+            
+            for (let i = 0; i < 3; i++) {
+                const price = Math.floor(Math.random() * (maxPrice - minPrice)) + minPrice;
+                products.push({
+                    id: Date.now() + i,
+                    name: productNames[i % productNames.length],
+                    price: price,
+                    category: category || 'general',
+                    description: `Quality product with great features and excellent value.`,
+                    rating: (Math.random() * 2 + 3).toFixed(1)
+                });
+            }
+            
+            return products;
+        }
+
+        // Sidebar Toggle for Mobile
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('open');
+        }
+
+        // Chat History Management
+        function saveChatHistory(sender, message, products = null) {
+            const historyItem = {
+                sender: sender,
+                message: message,
+                products: products,
+                timestamp: new Date().toISOString()
+            };
+            
+            chatHistory.push(historyItem);
+            
+            // Save to localStorage (in real app, save to backend)
+            localStorage.setItem('shopbot_history', JSON.stringify(chatHistory));
+        }
+
+        function loadChatHistory() {
+            const savedHistory = localStorage.getItem('shopbot_history');
+            if (savedHistory) {
+                chatHistory = JSON.parse(savedHistory);
+                
+                // Restore chat messages (limit to last 20 for performance)
+                const recentHistory = chatHistory.slice(-20);
+                const chatMessages = document.getElementById('chatMessages');
+                
+                // Clear existing messages except welcome
+                chatMessages.innerHTML = `
+                    <div class="message bot">
+                        <div class="message-avatar">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <div class="message-content">
+                            <div>Welcome back! Here's our recent conversation:</div>
+                            <div class="message-time">${getCurrentTime()}</div>
+                        </div>
+                    </div>
+                `;
+                
+                recentHistory.forEach(item => {
+                    if (item.sender === 'user') {
+                        addUserMessage(item.message);
+                    } else {
+                        addBotMessage(item.message, item.products);
+                    }
+                });
+                
+                messageCount = recentHistory.length + 1;
+                document.getElementById('messageCount').textContent = messageCount;
+            }
+        }
+
+        // Enhanced Product Interactions
+        function searchProducts(query) {
+            addBotMessage(`Searching for "${query}"...`);
+            
+            setTimeout(() => {
+                const products = generateMockProducts('general', 'product', 4);
+                addBotMessage(`Found ${products.length} products matching "${query}":`, products);
+            }, 1500);
+        }
+
+        // Auto-suggestions
+        const suggestions = [
+            "Show me laptops under $800",
+            "I need a gift for my friend",
+            "What's on sale today?",
+            "Best smartphones this year",
+            "Books about programming",
+            "Comfortable running shoes",
+            "Kitchen appliances",
+            "Gaming accessories"
+        ];
+
+        function showSuggestions() {
+            const randomSuggestions = suggestions.sort(() => 0.5 - Math.random()).slice(0, 3);
+            const suggestionText = "Here are some things you can ask me:\n" + 
+                randomSuggestions.map(s => `• ${s}`).join('\n');
+            
+            addBotMessage(suggestionText);
+        }
+
+        // Enhanced message processing with more natural responses
+        function getSmartResponse(message) {
+            const responses = {
+                greeting: [
+                    "Hello! Ready to find some amazing products?",
+                    "Hi there! What can I help you shop for today?",
+                    "Welcome! I'm here to make your shopping experience great!"
+                ],
+                goodbye: [
+                    "Thanks for shopping with us! Come back anytime!",
+                    "Have a great day! Don't hesitate to return if you need anything!",
+                    "Goodbye! Happy shopping!"
+                ],
+                thanks: [
+                    "You're very welcome! Anything else I can help you find?",
+                    "Happy to help! Is there anything else you'd like to see?",
+                    "My pleasure! Let me know if you need more assistance!"
+                ]
+            };
+            
+            const lowerMessage = message.toLowerCase();
+            
+            if (lowerMessage.match(/\b(hi|hello|hey|good morning|good afternoon)\b/)) {
+                return responses.greeting[Math.floor(Math.random() * responses.greeting.length)];
+            } else if (lowerMessage.match(/\b(bye|goodbye|see you|thanks|thank you|thx)\b/)) {
+                if (lowerMessage.includes('thank')) {
+                    return responses.thanks[Math.floor(Math.random() * responses.thanks.length)];
+                } else {
+                    return responses.goodbye[Math.floor(Math.random() * responses.goodbye.length)];
+                }
+            }
+            
+            return null;
+        }
+
+        // Initialize welcome message timer
+        setTimeout(() => {
+            if (messageCount <= 1) {
+                showSuggestions();
+            }
+        }, 5000);
+
+        // Auto-resize textarea on window resize
+        window.addEventListener('resize', adjustTextareaHeight);
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const menuBtn = document.querySelector('.mobile-menu-btn');
+            
+            if (window.innerWidth <= 768 && 
+                sidebar.classList.contains('open') && 
+                !sidebar.contains(event.target) && 
+                !menuBtn.contains(event.target)) {
+                sidebar.classList.remove('open');
+            }
+        });
+
+        // Prevent form submission on Enter in login
+        document.getElementById('loginForm').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && e.target.tagName !== 'BUTTON') {
+                e.preventDefault();
+                document.querySelector('.login-btn').click();
+            }
+        });
+
+        // Enhanced error handling
+        window.addEventListener('error', function(e) {
+            console.error('Application error:', e.error);
+        });
+
+        // Service Worker for offline functionality (basic implementation)
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').catch(function(error) {
+                console.log('ServiceWorker registration failed: ', error);
+            });
+        }
+
+        console.log('ShopBot Frontend initialized successfully!');
+    </script>
+</body>
+</html>
